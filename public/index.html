@@ -17,26 +17,9 @@
     <iframe srcdoc="<h1>Hello Worldddddddddd</h1>" width="1000" height="1000" frameborder="0"></iframe>
     <!--LSIO Function Bar-->
     <div id="lsbar">
-      <div class="icons" id="fileButton" title="File Manager" onclick="toggle('#files')">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-        </svg>
-      </div>
-      <div class="icons" id="audioButton" title="Enable Audio" onclick="audio()">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-          <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-          <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
-        </svg>
-      </div>
-      <div class="icons" id="micButton" title="Enable Microphone" onclick="mic()">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-          <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-          <line x1="12" y1="19" x2="12" y2="23"></line>
-          <line x1="8" y1="23" x2="16" y2="23"></line>
-        </svg>
-      </div>
+      <img class="icons" id="fileButton" title="File Manager" src="public/css/files.svg" onclick="toggle('#files')"/>
+      <img class="icons" id="audioButton" title="Enable Audio" src="public/css/speaker.svg" onclick="audio()"/>
+      <img class="icons" id="micButton" title="Enable Microphone" src="public/css/mic.svg" onclick="mic()"/>
     </div>
     <!--File Browser-->
     <div id="files">
