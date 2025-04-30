@@ -31,33 +31,44 @@ async function renderFiles(data) {
   let directory = data[2];
   let baseName = directory.split('/').slice(-1)[0]; 
   let parentFolder = directory.replace(baseName,'');
-  let parentLink = $('<td>').addClass('directory').attr('onclick', 'getFiles(\'' + parentFolder + '\');').text('..');
+  if (parentFolder.endsWith('/')) {
+    parentFolder = parentFolder.slice(0, -1);
+  }
   let directoryClean = directory.replace("'","|");
   if (directoryClean == '/') {
     directoryClean = '';
   }
+  
   let table = $('<table>').addClass('fileTable');
   let tableHeader = $('<tr>');
-  for await (name of ['Name', 'Type', 'Delete (NO WARNING)']) {
+  for await (name of ['Name', 'Type', 'Download']) {
     tableHeader.append($('<th>').text(name));
   }
-  let parentRow = $('<tr>');
-  for await (item of [parentLink, $('<td>').text('Parent'), $('<td>')]) {
-    parentRow.append(item);
-  }
-  table.append(tableHeader,parentRow);
+  table.append(tableHeader);
   $('#filebrowser').empty();
   $('#filebrowser').data('directory', directory);
-  $('#filebrowser').append($('<div>').text(directory));
   $('#filebrowser').append(table);
+  
+  // Add parent directory row only if not in home directory (/config)
+  if (directory !== '/config') {
+    let parentRow = $('<tr>');
+    let parentLink = $('<td>').addClass('directory').attr('onclick', 'getFiles(\'' + parentFolder + '\');').text('Back');
+    let parentType = $('<td>').text('Parent');
+    let parentDownload = $('<td>').text('-');
+    for await (item of [parentLink, parentType, parentDownload]) {
+      parentRow.append(item);
+    }
+    table.append(parentRow);
+  }
+  
   if (dirs.length > 0) {
     for await (let dir of dirs) {
       let tableRow = $('<tr>');
       let dirClean = dir.replace("'","|");
       let link = $('<td>').addClass('directory').attr('onclick', 'getFiles(\'' + directoryClean + '/' + dirClean + '\');').text(dir);
       let type = $('<td>').text('Dir');
-      let del = $('<td>').append($('<button>').addClass('deleteButton').attr('onclick', 'deleter(\'' + directoryClean + '/' + dirClean + '\');').text('Delete'));
-      for await (item of [link, type, del]) {
+      let download = $('<td>').text('-'); // Directories can't be downloaded
+      for await (item of [link, type, download]) {
         tableRow.append(item);
       }
       table.append(tableRow);
@@ -67,10 +78,14 @@ async function renderFiles(data) {
     for await (let file of files) {
       let tableRow = $('<tr>');
       let fileClean = file.replace("'","|");
-      let link = $('<td>').addClass('file').attr('onclick', 'downloadFile(\'' + directoryClean + '/' + fileClean + '\');').text(file);
+      let link = $('<td>').addClass('file').text(file);
       let type = $('<td>').text('File');
-      let del = $('<td>').append($('<button>').addClass('deleteButton').attr('onclick', 'deleter(\'' + directoryClean + '/' + fileClean + '\');').text('Delete'));
-      for await (item of [link, type, del]) {
+      let download = $('<td>').append(
+        $('<button>').text('Download').click(function() {
+          downloadFile(directoryClean + '/' + fileClean);
+        })
+      );
+      for await (item of [link, type, download]) {
         tableRow.append(item);
       }
       table.append(tableRow);

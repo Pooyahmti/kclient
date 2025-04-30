@@ -78,6 +78,9 @@ io.on('connection', async function (socket) {
         let dirs = [];
         let files = [];
         for await (let item of items) {
+          // Skip hidden files/directories (starting with '.')
+          if (item.startsWith('.')) continue;
+          
           let fullPath = directory + '/' + item;
           if (fs.lstatSync(fullPath).isDirectory()) {
             dirs.push(item);
