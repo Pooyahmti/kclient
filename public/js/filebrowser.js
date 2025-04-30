@@ -54,55 +54,6 @@ async function renderFiles(data) {
     directoryClean = '';
   }
   
-  // Create breadcrumb navigation
-  let pathParts = directory.split('/').filter(Boolean);
-  let breadcrumb = $('<div>').addClass('breadcrumb').css({
-    'display': 'flex',
-    'padding': '12px 20px',
-    'background': '#f8f9fa',
-    'border-bottom': '1px solid var(--border-color)',
-    'align-items': 'center',
-    'overflow-x': 'auto',
-    'white-space': 'nowrap'
-  });
-  
-  // Add root
-  breadcrumb.append(
-    $('<span>').text('Home')
-      .css({ 
-        'cursor': 'pointer',
-        'color': 'var(--primary-color)',
-        'padding': '0 5px',
-        'font-weight': '500',
-        'font-size': '14px'
-      })
-      .click(function() { getFiles('/config'); })
-  );
-  
-  // Build path
-  let currentPath = '';
-  for (let i = 0; i < pathParts.length; i++) {
-    currentPath += '/' + pathParts[i];
-    breadcrumb.append($('<span>').text(' > ').css({'color': '#999', 'margin': '0 5px'}));
-    
-    let part = pathParts[i];
-    let pathLink = $('<span>')
-      .text(part)
-      .css({ 
-        'cursor': i < pathParts.length - 1 ? 'pointer' : 'default',
-        'color': i < pathParts.length - 1 ? 'var(--primary-color)' : 'var(--text-color)',
-        'padding': '0 5px',
-        'font-weight': i === pathParts.length - 1 ? '600' : '500',
-        'font-size': '14px'
-      });
-      
-    if (i < pathParts.length - 1) {
-      pathLink.click(function() { getFiles(currentPath); });
-    }
-    
-    breadcrumb.append(pathLink);
-  }
-  
   let table = $('<table>').addClass('fileTable');
   let tableHeader = $('<tr>');
   for await (name of ['Name', 'Type', 'Download']) {
@@ -113,21 +64,17 @@ async function renderFiles(data) {
   $('#filebrowser').empty();
   $('#filebrowser').data('directory', directory);
   
-  // Only show breadcrumb if we're not at the root
-  if (directory !== '/config') {
-    $('#filebrowser').append(breadcrumb);
-  } else {
-    // Add a simple header for the root directory
-    $('#filebrowser').append(
-      $('<div>').text('Home Directory').css({
-        'padding': '16px 20px',
-        'font-size': '18px',
-        'font-weight': '600',
-        'background': '#f8f9fa',
-        'border-bottom': '1px solid var(--border-color)'
-      })
-    );
-  }
+  // Add a simple header showing current directory name
+  let displayName = directory === '/config' ? 'Home Directory' : directory.split('/').pop();
+  $('#filebrowser').append(
+    $('<div>').text(displayName).css({
+      'padding': '16px 20px',
+      'font-size': '18px',
+      'font-weight': '600',
+      'background': '#f8f9fa',
+      'border-bottom': '1px solid var(--border-color)'
+    })
+  );
   
   $('#filebrowser').append(table);
   
