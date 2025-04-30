@@ -1,18 +1,22 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Browser</title>
     <link rel="stylesheet" href="public/css/filebrowser.css">
     <script type="text/javascript" src="public/js/jquery.min.js"></script>
     <script src="files/socket.io/socket.io.js"></script>
     <script type="text/javascript" src="public/js/filebrowser.js"></script>
   </head>
   <body>
-  <span id="buttons">
-    <button onclick="$('#uploadInput').trigger( 'click' )">Upload Files</button>
-    <input class="hidden" id="uploadInput" type='file' onchange="upload(this);" multiple>
-  </span>
-  <div id="filebrowser"></div>
-  <div ondrop="dropFiles(event)" ondragover="allowDrop(event)" style="visibility:hidden;opacity:0" id="dropzone">
-  </div>
+    <div id="buttons">
+      <button onclick="$('#uploadInput').trigger('click')" style="display: flex; align-items: center;">
+        <span style="margin-right: 8px; font-size: 16px;">📤</span>Upload Files
+      </button>
+      <input class="hidden" id="uploadInput" type='file' onchange="upload(this);" multiple>
+    </div>
+    <div id="filebrowser"></div>
+    <div ondrop="dropFiles(event)" ondragover="allowDrop(event)" style="visibility:hidden;opacity:0" id="dropzone"></div>
   </body>
 </html>

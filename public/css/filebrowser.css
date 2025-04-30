@@ -1,72 +1,210 @@
-html * {
-  font-family: Poppins,Helvetica !important;
-  color: white !important;
+:root {
+  --primary-color: #4a6bdf;
+  --text-color: #333;
+  --border-color: #e0e0e0;
+  --hover-color: #f5f7ff;
+  --background-color: #ffffff;
+  --folder-color: #4a6bdf;
+  --file-color: #5d6778;
+  --button-color: #4a6bdf;
+  --button-hover: #3a59c8;
+  --button-text: white;
+  --border-radius: 8px;
+}
+
+* {
+  box-sizing: border-box;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  background-color: var(--background-color);
+  color: var(--text-color);
 }
 
 .hidden {
   display: none;
 }
 
-.right {
-  float: right;
-  margin-right: 5px;
+#filebrowser {
+  margin: 20px;
+  background: var(--background-color);
+  border-radius: var(--border-radius);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
 }
 
-.directory, .file {
-  cursor: pointer;
+#buttons {
+  display: flex;
+  padding: 16px 20px;
+  background-color: var(--primary-color);
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 button {
-  background-color: rgb(9 2 2 / 0.6);
-  border-radius: 5px;
-  border-style: inset;
-  border-color: rgb(255 255 255 / 0.6);
+  background-color: white;
+  color: var(--primary-color) !important;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-weight: 500;
   cursor: pointer;
-  margin: 5px;
+  font-size: 14px;
+  margin-right: 10px;
+  display: flex;
+  align-items: center;
+  transition: all 0.2s ease;
 }
 
-.deleteButton {
-  margin: 0px !important;
-  float: right;
+button:hover {
+  background-color: rgba(255, 255, 255, 0.9);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 5px rgba(0, 0, 0, 0.1);
 }
 
 .fileTable {
-  border-collapse: collapse;
   width: 100%;
-  margin-top: 10px;
+  border-collapse: collapse;
+  margin-top: 0;
+  table-layout: fixed;
 }
 
-td, th {
-  border: 2px solid #ddd;
-  padding: 8px;
+th {
+  background-color: #f8f9fa;
+  color: var(--text-color) !important;
+  font-weight: 600;
+  text-align: left;
+  padding: 16px 20px;
+  font-size: 14px;
+  border-bottom: 1px solid var(--border-color);
 }
 
-tr:hover, button:hover {
-  background: rgba(255, 255, 255, 0.3)
+td {
+  padding: 14px 20px;
+  color: var(--text-color) !important;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-#dropzone {
-  position: fixed; top: 0; left: 0; 
-  z-index: 9999999999;               
-  width: 100%; height: 100%;         
-  background-color: rgba(0,0,0,0.5);
-  transition: visibility 175ms, opacity 175ms;
+tr:hover {
+  background-color: var(--hover-color);
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+.directory {
+  cursor: pointer;
+  color: var(--folder-color) !important;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+}
+
+.directory:before {
+  content: "📁";
+  margin-right: 8px;
+  font-size: 16px;
+}
+
+.file {
+  cursor: default;
+  color: var(--file-color) !important;
+  display: flex;
+  align-items: center;
+}
+
+.file:before {
+  content: "📄";
+  margin-right: 8px;
+  font-size: 16px;
 }
 
 #loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100px;
+  width: 100%;
+}
+
+.loading-spinner {
   display: inline-block;
-  width: 50px;
-  height: 50px;
-  border: 3px solid rgba(0,0,0,.3);
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(74, 107, 223, 0.2);
   border-radius: 50%;
-  border-top-color: black;
+  border-top-color: var(--primary-color);
   animation: spin 1s ease-in-out infinite;
-  -webkit-animation: spin 1s ease-in-out infinite;
 }
 
 @keyframes spin {
-  to { -webkit-transform: rotate(360deg); }
+  to { transform: rotate(360deg); }
 }
-@-webkit-keyframes spin {
-  to { -webkit-transform: rotate(360deg); }
+
+#dropzone {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 999;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(74, 107, 223, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+#dropzone:after {
+  content: "Drop files here";
+  color: white !important;
+  font-size: 24px;
+  font-weight: 500;
+}
+
+.download-button {
+  background-color: var(--button-color);
+  color: var(--button-text) !important;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.download-button:hover {
+  background-color: var(--button-hover);
+}
+
+/* Back button styling */
+.back-link:before {
+  content: "⬅️";
+  margin-right: 8px;
+  font-size: 16px;
+}
+
+/* Make the table responsive */
+@media (max-width: 768px) {
+  th:nth-child(2), td:nth-child(2) {
+    display: none;
+  }
+  
+  #buttons {
+    flex-wrap: wrap;
+  }
+  
+  button {
+    margin-bottom: 10px;
+  }
 }
