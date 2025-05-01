@@ -92,6 +92,11 @@ PCM.prototype.destroy = function() {
 function openToggle(id) {
   if ($(id).is(":hidden")) {
     $(id).slideToggle(300);
+    // If we're opening the file browser, refresh it
+    if (id === '#files') {
+      // Send a message to the iframe to reset to default directory
+      document.getElementById('files_frame').contentWindow.postMessage('resetToDefault', '*');
+    }
   }
 }
 function closeToggle(id) {
@@ -100,7 +105,16 @@ function closeToggle(id) {
   }
 }
 function toggle(id) {
-  $(id).slideToggle(300);
+  if ($(id).is(":hidden")) {
+    $(id).slideToggle(300);
+    // If we're opening the file browser, refresh it
+    if (id === '#files') {
+      // Send a message to the iframe to reset to default directory
+      document.getElementById('files_frame').contentWindow.postMessage('resetToDefault', '*');
+    }
+  } else {
+    $(id).slideToggle(300);
+  }
 }
 
 // Fullscreen handler

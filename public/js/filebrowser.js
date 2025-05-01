@@ -540,6 +540,16 @@ function closeFileManager() {
   }
 }
 
+// Listen for messages from parent window
+window.addEventListener('message', function(event) {
+  // Check if we received the reset message
+  if (event.data === 'resetToDefault') {
+    // Reset to the default directory (/config)
+    showLoading();
+    socket.emit('open', '');
+  }
+}, false);
+
 // Incoming socket requests
 socket.on('renderfiles', renderFiles);
 socket.on('sendfile', sendFile);
