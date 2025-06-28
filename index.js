@@ -31,7 +31,21 @@ pulse.on('error', function(error) {
   audioEnabled = false;
   console.log('Kclient was unable to init audio, it is possible your host lacks support!!!!');
 });
+const multer = require('multer');
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+      cb(null, "/config");
+  },
+  filename: function (req, file, cb) {
+      cb(null, file.originalname); // Save with the original filename
+  }
+});
+const upload = multer({ storage: storage }); // or configure as needed
 
+baseRouter.post('/upload', upload.single('file'), async (req, res) => {
+
+  res.json({ success: true });
+});
 
 //// Server Paths Main ////
 app.engine('html', require('ejs').renderFile);

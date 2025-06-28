@@ -44,7 +44,7 @@ async function renderFiles(data) {
   let dirs = data[0];
   let files = data[1];
   let directory = data[2];
-  let baseName = directory.split('/').slice(-1)[0]; 
+  let baseName = directory.split('/').slice(-1)[0];
   let parentFolder = directory.replace(baseName,'');
   if (parentFolder.endsWith('/')) {
     parentFolder = parentFolder.slice(0, -1);
@@ -226,8 +226,6 @@ async function upload(input) {
   }
   if (input.files && input.files[0]) {
     showLoading();
-    
-    // Create upload progress container
     let progressContainer = $('<div>')
       .attr('id', 'upload-progress-container')
       .css({
@@ -243,84 +241,27 @@ async function upload(input) {
       });
     
     $('body').append(progressContainer);
-    
-    for await (let file of input.files) {
-      let reader = new FileReader();
-      
-      // Create progress item for this file
-      let progressItem = $('<div>')
-        .addClass('upload-item')
-        .css({
-          'margin-bottom': '10px',
-          'font-size': '13px'
-        });
-      
-      let fileName = $('<div>')
-        .text(file.name)
-        .css({
-          'margin-bottom': '5px',
-          'font-weight': '500',
-          'white-space': 'nowrap',
-          'overflow': 'hidden',
-          'text-overflow': 'ellipsis'
-        });
-      
-      let progressBar = $('<div>')
-        .addClass('progress-bar-container')
-        .css({
-          'height': '6px',
-          'background': '#eee',
-          'border-radius': '3px',
-          'overflow': 'hidden'
-        });
-      
-      let progress = $('<div>')
-        .addClass('progress')
-        .css({
-          'height': '100%',
-          'background': 'var(--primary-color)',
-          'width': '0%',
-          'transition': 'width 0.3s'
-        });
-      
-      progressBar.append(progress);
-      progressItem.append(fileName, progressBar);
-      progressContainer.append(progressItem);
-      
-      reader.onprogress = function(e) {
+    for (let file of input.files) {
+      let formData = new FormData();
+      formData.append('file', file);
+      formData.append('directory', directoryUp);
+      let xhr = new XMLHttpRequest();
+      xhr.open('POST', '/upload');
+      xhr.upload.onprogress = function(e) {
         if (e.lengthComputable) {
           let percentLoaded = Math.round((e.loaded / e.total) * 100);
-          progress.css('width', percentLoaded + '%');
+          // update progress bar
         }
       };
-      
-      reader.onload = async function(e) {
-        let fileName = file.name;
-        progress.css('width', '100%');
-        
-        if (e.total < 200000000) {
-          let data = e.target.result;
-          if (file == input.files[input.files.length - 1]) {
-            socket.emit('uploadfile', [directory, directoryUp + '/' + fileName, data, true]);
-            
-            // Remove progress container after 1 second
-            setTimeout(function() {
-              progressContainer.fadeOut(function() {
-                $(this).remove();
-              });
-            }, 1000);
-          } else {
-            socket.emit('uploadfile', [directory, directoryUp + '/' + fileName, data, false]);
-          }
+      xhr.onload = function() {
+        if (xhr.status === 200) {
+          // handle success, refresh file list
+          getFiles(directory);
         } else {
-          progressItem.css('color', 'red');
-          fileName.text(fileName.text() + ' - File too big');
-          await new Promise(resolve => setTimeout(resolve, 2000));
-          socket.emit('getfiles', directory);
+          // handle error
         }
       };
-      
-      reader.readAsArrayBuffer(file);
+      xhr.send(formData);
     }
   }
 }
