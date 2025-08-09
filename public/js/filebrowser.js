@@ -152,7 +152,7 @@ async function renderFiles(data) {
 // Download a file
 function downloadFile(file) {
   file = file.replace("|","'");
-  window.location.href = '/download?path=' + encodeURIComponent(file);
+  window.location.href = './download?path=' + encodeURIComponent(file);
 }
 
 // Upload files to current directory
@@ -223,7 +223,7 @@ async function upload(input) {
       formData.append('file', file);
       formData.append('directory', directoryUp);
       let xhr = new XMLHttpRequest();
-      xhr.open('POST', '/upload');
+      xhr.open('POST', './upload');
       xhr.upload.onprogress = function(e) {
         if (e.lengthComputable) {
           let percentLoaded = Math.round((e.loaded / e.total) * 100);
