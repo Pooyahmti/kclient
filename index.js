@@ -67,6 +67,12 @@ baseRouter.get('/manifest.json', function (req, res) {
 baseRouter.get('/files', function (req, res) {
   res.sendFile( __dirname + '/public/filebrowser.html');
 });
+
+baseRouter.get('/download', function(req, res) {
+  const file = req.query.path;
+  res.download(file);
+});
+
 // Websocket comms //
 io = socketIO(http, {path: SUBFOLDER + 'files/socket.io',maxHttpBufferSize: 200000000});
 io.on('connection', async function (socket) {
@@ -159,7 +165,6 @@ io.on('connection', async function (socket) {
   // Incoming socket requests
   socket.on('open', checkAuth);
   socket.on('getfiles', getFiles);
-  socket.on('downloadfile', downloadFile);
   socket.on('uploadfile', uploadFile);
   socket.on('deletefiles', deleteFiles);
   socket.on('createfolder', createFolder);

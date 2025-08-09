@@ -152,68 +152,7 @@ async function renderFiles(data) {
 // Download a file
 function downloadFile(file) {
   file = file.replace("|","'");
-  
-  // Show downloading indicator
-  $('#filebrowser').append(
-    $('<div>')
-      .attr('id', 'download-status')
-      .text('Downloading file...')
-      .css({
-        'position': 'fixed',
-        'bottom': '20px',
-        'right': '20px',
-        'background': 'var(--primary-color)',
-        'color': 'white !important',
-        'padding': '10px 20px',
-        'border-radius': '4px',
-        'box-shadow': '0 2px 10px rgba(0,0,0,0.1)',
-        'z-index': '1000'
-      })
-  );
-  
-  socket.emit('downloadfile', file);
-}
-
-// Send buffer to download blob
-function sendFile(res) {
-  let data = res[0];
-  let fileName = res[1];
-  let blob = new Blob([data], { type: "application/octetstream" });
-  let url = window.URL || window.webkitURL;
-  link = url.createObjectURL(blob);
-  let a = $("<a />");
-  a.attr("download", fileName);
-  a.attr("href", link);
-  $("body").append(a);
-  a[0].click();
-  $("body").remove(a);
-  
-  // Remove the download status and show success
-  $('#download-status').remove();
-  
-  let successNotice = $('<div>')
-    .attr('id', 'download-success')
-    .text('Download complete!')
-    .css({
-      'position': 'fixed',
-      'bottom': '20px',
-      'right': '20px',
-      'background': '#4caf50',
-      'color': 'white !important',
-      'padding': '10px 20px',
-      'border-radius': '4px',
-      'box-shadow': '0 2px 10px rgba(0,0,0,0.1)',
-      'z-index': '1000'
-    });
-  
-  $('body').append(successNotice);
-  
-  // Remove success notice after 3 seconds
-  setTimeout(function() {
-    successNotice.fadeOut(function() {
-      $(this).remove();
-    });
-  }, 3000);
+  window.location.href = '/download?path=' + encodeURIComponent(file);
 }
 
 // Upload files to current directory
@@ -225,7 +164,6 @@ async function upload(input) {
     directoryUp = directory;
   }
   if (input.files && input.files[0]) {
-    showLoading();
     let progressContainer = $('<div>')
       .attr('id', 'upload-progress-container')
       .css({
@@ -242,6 +180,45 @@ async function upload(input) {
     
     $('body').append(progressContainer);
     for (let file of input.files) {
+      let progressItem = $('<div>')
+        .addClass('upload-item')
+        .css({
+          'margin-bottom': '10px',
+          'font-size': '13px'
+        });
+      
+      let fileName = $('<div>')
+        .text(file.name)
+        .css({
+          'margin-bottom': '5px',
+          'font-weight': '500',
+          'white-space': 'nowrap',
+          'overflow': 'hidden',
+          'text-overflow': 'ellipsis'
+        });
+      
+      let progressBar = $('<div>')
+        .addClass('progress-bar-container')
+        .css({
+          'height': '6px',
+          'background': '#eee',
+          'border-radius': '3px',
+          'overflow': 'hidden'
+        });
+      
+      let progress = $('<div>')
+        .addClass('progress')
+        .css({
+          'height': '100%',
+          'background': 'var(--primary-color)',
+          'width': '0%',
+          'transition': 'width 0.3s'
+        });
+
+      progressBar.append(progress);
+      progressItem.append(fileName, progressBar);
+      progressContainer.append(progressItem);
+
       let formData = new FormData();
       formData.append('file', file);
       formData.append('directory', directoryUp);
@@ -250,19 +227,33 @@ async function upload(input) {
       xhr.upload.onprogress = function(e) {
         if (e.lengthComputable) {
           let percentLoaded = Math.round((e.loaded / e.total) * 100);
-          // update progress bar
+          progress.css('width', percentLoaded + '%');
         }
       };
       xhr.onload = function() {
         if (xhr.status === 200) {
-          // handle success, refresh file list
+          progress.css('width', '100%');
+          setTimeout(function() {
+            progressItem.fadeOut(function() {
+              $(this).remove();
+              if (progressContainer.children().length === 0) {
+                progressContainer.fadeOut(function() {
+                  $(this).remove();
+                });
+              }
+            });
+          }, 500);
           getFiles(directory);
         } else {
           // handle error
+          progressItem.css('color', 'red');
+          fileName.text(fileName.text() + ' - Upload Failed');
         }
       };
       xhr.send(formData);
     }
+    // Clear the file input value to allow re-uploading the same file
+    $(input).val('');
   }
 }
 
@@ -493,4 +484,3 @@ window.addEventListener('message', function(event) {
 
 // Incoming socket requests
 socket.on('renderfiles', renderFiles);
-socket.on('sendfile', sendFile);
