@@ -116,10 +116,13 @@ io.on('connection', async function (socket) {
           if (item.startsWith('.')) continue;
           
           let fullPath = directory + '/' + item;
-          if (fs.lstatSync(fullPath).isDirectory()) {
-            dirs.push(item);
+          let stats = fs.lstatSync(fullPath);
+          let modifiedTime = stats.mtime;
+          
+          if (stats.isDirectory()) {
+            dirs.push({name: item, modified: modifiedTime});
           } else {
-            files.push(item);
+            files.push({name: item, modified: modifiedTime});
           }
         }
         send('renderfiles', [dirs, files, directory]);

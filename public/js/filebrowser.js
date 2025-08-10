@@ -39,6 +39,18 @@ function formatFileSize(bytes) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
+// Format date for display
+function formatDate(date) {
+  const options = {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  };
+  return new Date(date).toLocaleDateString('en-US', options);
+}
+
 // Render file list
 async function renderFiles(data) {
   let dirs = data[0];
@@ -56,7 +68,7 @@ async function renderFiles(data) {
   
   let table = $('<table>').addClass('fileTable');
   let tableHeader = $('<tr>');
-  for await (name of ['Name', 'Type', 'Download', 'Delete']) {
+  for await (name of ['Name', 'Type', 'Last Modified', 'Download', 'Delete']) {
     tableHeader.append($('<th>').text(name));
   }
   table.append(tableHeader);
@@ -85,25 +97,33 @@ async function renderFiles(data) {
       .attr('onclick', 'getFiles(\'' + parentFolder + '\');')
       .text('Back');
     let parentType = $('<td>').text('Parent');
+    let parentModified = $('<td>').text('-');
     let parentDownload = $('<td>').text('-');
     let parentDelete = $('<td>').text('-');
-    for await (item of [parentLink, parentType, parentDownload, parentDelete]) {
+    for await (item of [parentLink, parentType, parentModified, parentDownload, parentDelete]) {
       parentRow.append(item);
     }
     table.append(parentRow);
   }
   
   // Sort directories alphabetically
-  dirs.sort((a, b) => a.localeCompare(b));
+  dirs.sort((a, b) => {
+    const nameA = typeof a === 'string' ? a : a.name;
+    const nameB = typeof b === 'string' ? b : b.name;
+    return nameA.localeCompare(nameB);
+  });
   
   if (dirs.length > 0) {
     for await (let dir of dirs) {
       let tableRow = $('<tr>');
-      let dirClean = dir.replace("'","|");
+      let dirName = typeof dir === 'string' ? dir : dir.name;
+      let dirModified = typeof dir === 'string' ? '-' : formatDate(dir.modified);
+      let dirClean = dirName.replace("'","|");
       let link = $('<td>').addClass('directory')
         .attr('onclick', 'getFiles(\'' + directoryClean + '/' + dirClean + '\');')
-        .text(dir);
+        .text(dirName);
       let type = $('<td>').text('Folder');
+      let modified = $('<td>').text(dirModified);
       let download = $('<td>').append(
         $('<button>').addClass('download-button').text('Download')
           .click(function() {
@@ -116,7 +136,7 @@ async function renderFiles(data) {
             deleter(directoryClean + '/' + dirClean);
           })
       );
-      for await (item of [link, type, download, deleteBtn]) {
+      for await (item of [link, type, modified, download, deleteBtn]) {
         tableRow.append(item);
       }
       table.append(tableRow);
@@ -124,14 +144,21 @@ async function renderFiles(data) {
   }
   
   // Sort files alphabetically
-  files.sort((a, b) => a.localeCompare(b));
+  files.sort((a, b) => {
+    const nameA = typeof a === 'string' ? a : a.name;
+    const nameB = typeof b === 'string' ? b : b.name;
+    return nameA.localeCompare(nameB);
+  });
   
   if (files.length > 0) {
     for await (let file of files) {
       let tableRow = $('<tr>');
-      let fileClean = file.replace("'","|");
-      let link = $('<td>').addClass('file').text(file);
+      let fileName = typeof file === 'string' ? file : file.name;
+      let fileModified = typeof file === 'string' ? '-' : formatDate(file.modified);
+      let fileClean = fileName.replace("'","|");
+      let link = $('<td>').addClass('file').text(fileName);
       let type = $('<td>').text('File');
+      let modified = $('<td>').text(fileModified);
       let download = $('<td>').append(
         $('<button>').addClass('download-button').text('Download')
           .click(function() {
@@ -144,7 +171,7 @@ async function renderFiles(data) {
             deleter(directoryClean + '/' + fileClean);
           })
       );
-      for await (item of [link, type, download, deleteBtn]) {
+      for await (item of [link, type, modified, download, deleteBtn]) {
         tableRow.append(item);
       }
       table.append(tableRow);
@@ -155,7 +182,7 @@ async function renderFiles(data) {
   if (dirs.length === 0 && files.length === 0) {
     let emptyRow = $('<tr>');
     let emptyCell = $('<td>')
-      .attr('colspan', '4')
+      .attr('colspan', '5')
       .css({
         'text-align': 'center',
         'padding': '40px 20px',
