@@ -56,7 +56,7 @@ async function renderFiles(data) {
   
   let table = $('<table>').addClass('fileTable');
   let tableHeader = $('<tr>');
-  for await (name of ['Name', 'Type', 'Download']) {
+  for await (name of ['Name', 'Type', 'Download', 'Delete']) {
     tableHeader.append($('<th>').text(name));
   }
   table.append(tableHeader);
@@ -86,7 +86,8 @@ async function renderFiles(data) {
       .text('Back');
     let parentType = $('<td>').text('Parent');
     let parentDownload = $('<td>').text('-');
-    for await (item of [parentLink, parentType, parentDownload]) {
+    let parentDelete = $('<td>').text('-');
+    for await (item of [parentLink, parentType, parentDownload, parentDelete]) {
       parentRow.append(item);
     }
     table.append(parentRow);
@@ -103,8 +104,19 @@ async function renderFiles(data) {
         .attr('onclick', 'getFiles(\'' + directoryClean + '/' + dirClean + '\');')
         .text(dir);
       let type = $('<td>').text('Folder');
-      let download = $('<td>').text('-'); // Directories can't be downloaded
-      for await (item of [link, type, download]) {
+      let download = $('<td>').append(
+        $('<button>').addClass('download-button').text('Download')
+          .click(function() {
+            downloadFile(directoryClean + '/' + dirClean);
+          })
+      );
+      let deleteBtn = $('<td>').append(
+        $('<button>').addClass('delete-button').text('Delete')
+          .click(function() {
+            deleter(directoryClean + '/' + dirClean);
+          })
+      );
+      for await (item of [link, type, download, deleteBtn]) {
         tableRow.append(item);
       }
       table.append(tableRow);
@@ -126,7 +138,13 @@ async function renderFiles(data) {
             downloadFile(directoryClean + '/' + fileClean);
           })
       );
-      for await (item of [link, type, download]) {
+      let deleteBtn = $('<td>').append(
+        $('<button>').addClass('delete-button').text('Delete')
+          .click(function() {
+            deleter(directoryClean + '/' + fileClean);
+          })
+      );
+      for await (item of [link, type, download, deleteBtn]) {
         tableRow.append(item);
       }
       table.append(tableRow);
@@ -137,7 +155,7 @@ async function renderFiles(data) {
   if (dirs.length === 0 && files.length === 0) {
     let emptyRow = $('<tr>');
     let emptyCell = $('<td>')
-      .attr('colspan', '3')
+      .attr('colspan', '4')
       .css({
         'text-align': 'center',
         'padding': '40px 20px',

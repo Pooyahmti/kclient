@@ -22,6 +22,7 @@ var bodyParser = require('body-parser');
 var baseRouter = express.Router();
 var fsw = require('fs').promises;
 var fs = require('fs');
+const archiver = require('archiver');
 // Audio init
 var audioEnabled = true;
 var PulseAudio = require('pulseaudio2');
@@ -70,7 +71,20 @@ baseRouter.get('/files', function (req, res) {
 
 baseRouter.get('/download', function(req, res) {
   const file = req.query.path;
-  res.download(file);
+  const stat = fs.lstatSync(file);
+
+  if (stat.isDirectory()) {
+    const archive = archiver('zip', {
+      zlib: { level: 9 } // Sets the compression level.
+    });
+
+    res.attachment(file + '.zip');
+    archive.pipe(res);
+    archive.directory(file, false);
+    archive.finalize();
+  } else {
+    res.download(file);
+  }
 });
 
 // Websocket comms //
