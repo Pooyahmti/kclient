@@ -39,6 +39,12 @@ function formatFileSize(bytes) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
+// Global variables for sorting
+let currentSortColumn = null;
+let currentSortDirection = 'asc';
+let currentDirs = [];
+let currentFiles = [];
+
 // Format date for display
 function formatDate(date) {
   const options = {
@@ -51,70 +57,73 @@ function formatDate(date) {
   return new Date(date).toLocaleDateString('en-US', options);
 }
 
-// Render file list
-async function renderFiles(data) {
-  let dirs = data[0];
-  let files = data[1];
-  let directory = data[2];
-  let baseName = directory.split('/').slice(-1)[0];
-  let parentFolder = directory.replace(baseName,'');
-  if (parentFolder.endsWith('/')) {
-    parentFolder = parentFolder.slice(0, -1);
-  }
+// Sort function for files and directories
+function sortItems(items, column, direction) {
+  return items.sort((a, b) => {
+    let valueA, valueB;
+    
+    if (column === 'name') {
+      valueA = (typeof a === 'string' ? a : a.name).toLowerCase();
+      valueB = (typeof b === 'string' ? b : b.name).toLowerCase();
+    } else if (column === 'modified') {
+      // Handle items without modification time (like strings)
+      if (typeof a === 'string' || typeof b === 'string') {
+        return 0; // Keep original order for items without modification time
+      }
+      valueA = new Date(a.modified);
+      valueB = new Date(b.modified);
+    } else {
+      return 0;
+    }
+    
+    if (direction === 'asc') {
+      return valueA < valueB ? -1 : valueA > valueB ? 1 : 0;
+    } else {
+      return valueA > valueB ? -1 : valueA < valueB ? 1 : 0;
+    }
+  });
+}
+
+// Re-render the table with current sort
+function rerenderTable() {
+  let directory = $('#filebrowser').data('directory');
   let directoryClean = directory.replace("'","|");
   if (directoryClean == '/') {
     directoryClean = '';
   }
   
-  let table = $('<table>').addClass('fileTable');
-  let tableHeader = $('<tr>');
-  for await (name of ['Name', 'Type', 'Last Modified', 'Download', 'Delete']) {
-    tableHeader.append($('<th>').text(name));
+  // Sort the current data
+  let sortedDirs = [...currentDirs];
+  let sortedFiles = [...currentFiles];
+  
+  if (currentSortColumn) {
+    sortedDirs = sortItems(sortedDirs, currentSortColumn, currentSortDirection);
+    sortedFiles = sortItems(sortedFiles, currentSortColumn, currentSortDirection);
   }
-  table.append(tableHeader);
   
-  $('#filebrowser').empty();
-  $('#filebrowser').data('directory', directory);
-  
-  // Add a simple header showing current directory name
-  let displayName = directory === '/config' ? 'Home Directory' : directory.split('/').pop();
-  $('#filebrowser').append(
-    $('<div>').text(displayName).css({
-      'padding': '16px 20px',
-      'font-size': '18px',
-      'font-weight': '600',
-      'background': '#f8f9fa',
-      'border-bottom': '1px solid var(--border-color)'
-    })
-  );
-  
-  $('#filebrowser').append(table);
+  // Find the table and clear existing rows (except header)
+  let table = $('.fileTable');
+  table.find('tr:not(:first)').remove();
   
   // Add parent directory row only if not in home directory (/config)
   if (directory !== '/config') {
     let parentRow = $('<tr>');
     let parentLink = $('<td>').addClass('directory back-link')
-      .attr('onclick', 'getFiles(\'' + parentFolder + '\');')
+      .attr('onclick', 'getFiles(\'' + directory.replace(directory.split('/').slice(-1)[0],'').replace(/\/$/, '') + '\');')
       .text('Back');
     let parentType = $('<td>').text('Parent');
     let parentModified = $('<td>').text('-');
     let parentDownload = $('<td>').text('-');
     let parentDelete = $('<td>').text('-');
-    for await (item of [parentLink, parentType, parentModified, parentDownload, parentDelete]) {
+    for (let item of [parentLink, parentType, parentModified, parentDownload, parentDelete]) {
       parentRow.append(item);
     }
     table.append(parentRow);
   }
   
-  // Sort directories alphabetically
-  dirs.sort((a, b) => {
-    const nameA = typeof a === 'string' ? a : a.name;
-    const nameB = typeof b === 'string' ? b : b.name;
-    return nameA.localeCompare(nameB);
-  });
-  
-  if (dirs.length > 0) {
-    for await (let dir of dirs) {
+  // Add directories
+  if (sortedDirs.length > 0) {
+    for (let dir of sortedDirs) {
       let tableRow = $('<tr>');
       let dirName = typeof dir === 'string' ? dir : dir.name;
       let dirModified = typeof dir === 'string' ? '-' : formatDate(dir.modified);
@@ -136,22 +145,16 @@ async function renderFiles(data) {
             deleter(directoryClean + '/' + dirClean);
           })
       );
-      for await (item of [link, type, modified, download, deleteBtn]) {
+      for (let item of [link, type, modified, download, deleteBtn]) {
         tableRow.append(item);
       }
       table.append(tableRow);
     }
   }
   
-  // Sort files alphabetically
-  files.sort((a, b) => {
-    const nameA = typeof a === 'string' ? a : a.name;
-    const nameB = typeof b === 'string' ? b : b.name;
-    return nameA.localeCompare(nameB);
-  });
-  
-  if (files.length > 0) {
-    for await (let file of files) {
+  // Add files
+  if (sortedFiles.length > 0) {
+    for (let file of sortedFiles) {
       let tableRow = $('<tr>');
       let fileName = typeof file === 'string' ? file : file.name;
       let fileModified = typeof file === 'string' ? '-' : formatDate(file.modified);
@@ -171,7 +174,7 @@ async function renderFiles(data) {
             deleter(directoryClean + '/' + fileClean);
           })
       );
-      for await (item of [link, type, modified, download, deleteBtn]) {
+      for (let item of [link, type, modified, download, deleteBtn]) {
         tableRow.append(item);
       }
       table.append(tableRow);
@@ -179,7 +182,7 @@ async function renderFiles(data) {
   }
   
   // Show empty state if no files or directories
-  if (dirs.length === 0 && files.length === 0) {
+  if (sortedDirs.length === 0 && sortedFiles.length === 0) {
     let emptyRow = $('<tr>');
     let emptyCell = $('<td>')
       .attr('colspan', '5')
@@ -529,3 +532,97 @@ window.addEventListener('message', function(event) {
 
 // Incoming socket requests
 socket.on('renderfiles', renderFiles);
+
+// Render file list
+async function renderFiles(data) {
+  let dirs = data[0];
+  let files = data[1];
+  let directory = data[2];
+  
+  // Store current data globally for sorting
+  currentDirs = dirs;
+  currentFiles = files;
+  
+  let directoryClean = directory.replace("'","|");
+  if (directoryClean == '/') {
+    directoryClean = '';
+  }
+  
+  let table = $('<table>').addClass('fileTable');
+  let tableHeader = $('<tr>');
+  
+  // Create clickable headers
+  let headers = [
+    { name: 'Name', sortKey: 'name' },
+    { name: 'Type', sortKey: null },
+    { name: 'Last Modified', sortKey: 'modified' },
+    { name: 'Download', sortKey: null },
+    { name: 'Delete', sortKey: null }
+  ];
+  
+  for (let header of headers) {
+    let th = $('<th>').text(header.name);
+    
+    if (header.sortKey) {
+      th.addClass('sortable').css({
+        'cursor': 'pointer',
+        'user-select': 'none',
+        'position': 'relative'
+      });
+      
+      // Add sort indicator
+      if (currentSortColumn === header.sortKey) {
+        let indicator = currentSortDirection === 'asc' ? ' ↑' : ' ↓';
+        th.text(header.name + indicator);
+      }
+      
+      th.click(function() {
+        // Toggle sort direction if same column, otherwise set to ascending
+        if (currentSortColumn === header.sortKey) {
+          currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+          currentSortColumn = header.sortKey;
+          currentSortDirection = 'asc';
+        }
+        
+        // Update header indicators
+        tableHeader.find('th').each(function() {
+          let headerText = $(this).text().replace(' ↑', '').replace(' ↓', '');
+          $(this).text(headerText);
+        });
+        
+        let indicator = currentSortDirection === 'asc' ? ' ↑' : ' ↓';
+        $(this).text(header.name + indicator);
+        
+        // Re-render the table with new sort
+        rerenderTable();
+      });
+    }
+    
+    tableHeader.append(th);
+  }
+  
+  table.append(tableHeader);
+  
+  $('#filebrowser').empty();
+  $('#filebrowser').data('directory', directory);
+  
+  // Add a simple header showing current directory name
+  let displayName = directory === '/config' ? 'Home Directory' : directory.split('/').pop();
+  $('#filebrowser').append(
+    $('<div>').text(displayName).css({
+      'padding': '16px 20px',
+      'font-size': '18px',
+      'font-weight': '600',
+      'background': '#f8f9fa',
+      'border-bottom': '1px solid var(--border-color)'
+    })
+  );
+  
+  $('#filebrowser').append(table);
+  
+  // Initial render with default sorting (alphabetical by name)
+  currentSortColumn = 'name';
+  currentSortDirection = 'asc';
+  rerenderTable();
+}

@@ -83,6 +83,16 @@ th {
   border-bottom: 1px solid var(--border-color);
 }
 
+th.sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.2s;
+}
+
+th.sortable:hover {
+  background-color: #e9ecef;
+}
+
 td {
   padding: 14px 20px;
   color: var(--text-color) !important;
